@@ -1,9 +1,10 @@
 import * as api from "../data/api";
 import { useAsync } from "../data/useAsync";
 import { href, useRoute } from "../router";
-import { ActionRow, Empty, ErrorNote, Loading, SectionTitle } from "../ui/bits";
+import { Empty, ErrorNote, Loading } from "../ui/bits";
 import { Icon } from "../ui/icons";
-import { joinable, longDate, time, until } from "../format";
+import { joinable, longDate, nameInitials, time, until } from "../format";
+import type { Visit } from "../data/types";
 
 export default function Visits() {
   const route = useRoute();
@@ -16,40 +17,96 @@ function VisitList() {
   if (upcoming.loading) return <Loading />;
   if (upcoming.error) return <ErrorNote message={upcoming.error} />;
 
+  const [next, ...later] = upcoming.data ?? [];
+
   return (
     <>
-      <h1>Visits</h1>
-      <SectionTitle>Coming up</SectionTitle>
-      {upcoming.data?.length ? (
-        upcoming.data.map((v) => (
-          <ActionRow
-            key={v.id}
-            title={longDate(v.startAt)}
-            meta={`${time(v.startAt)} · ${v.provider.name}${v.telehealth ? " · Video" : ""}`}
-            to={href("visits", v.id)}
-          />
-        ))
-      ) : (
-        <Empty>Nothing booked yet.</Empty>
+      <h1 className="hello">Visits</h1>
+
+      {next ? <VisitPanel visit={next} /> : <Empty>Nothing booked yet.</Empty>}
+
+      {later.length > 0 && (
+        <section className="pcard">
+          <div className="pcard-head"><span className="lbl">Also coming up</span></div>
+          <div className="tlist">
+            {later.map((v) => <VisitRow key={v.id} visit={v} />)}
+          </div>
+        </section>
       )}
 
       <a className="btn ghost" href={href("messages")}>Request an appointment</a>
 
-      <SectionTitle>Past visits</SectionTitle>
-      {past.data?.length ? (
-        past.data.map((v) => (
-          <ActionRow
-            key={v.id}
-            quiet
-            title={longDate(v.startAt)}
-            meta={`${v.kind} · ${v.provider.name}`}
-            to={href("visits", v.id)}
-          />
-        ))
-      ) : (
-        <Empty>Your past visits will appear here.</Empty>
-      )}
+      <section className="pcard">
+        <div className="pcard-head"><span className="lbl">Past visits</span></div>
+        {past.data?.length ? (
+          <div className="tlist">
+            {past.data.map((v) => <VisitRow key={v.id} visit={v} showKind />)}
+          </div>
+        ) : (
+          <p className="muted" style={{ marginTop: 6 }}>Your past visits will appear here.</p>
+        )}
+      </section>
     </>
+  );
+}
+
+/** The next visit gets the same panel it has on Home — one visual idea for
+    one fact, wherever the patient meets it. */
+function VisitPanel({ visit }: { visit: Visit }) {
+  const canJoin = joinable(visit.startAt);
+  return (
+    <section className="pcard blue">
+      <div className="pcard-head">
+        <span className="lbl">
+          <Icon name="calendar" size={16} />
+          Your next visit · {until(visit.startAt)}
+        </span>
+        <span className="sp" />
+        <a className="iconbtn solid" href={href("visits", visit.id)} aria-label="Visit details">
+          <Icon name="arrow" size={19} />
+        </a>
+      </div>
+
+      <h2 className="headline">
+        {canJoin
+          ? <>Starting <b>{until(visit.startAt)}</b></>
+          : <><b>{longDate(visit.startAt)}</b> at <b>{time(visit.startAt)}</b></>}
+        {visit.telehealth && <span className="inline-pill"><Icon name="video" size={14} /> Video</span>}
+      </h2>
+
+      <p className="who">
+        <span className="inline-face" aria-hidden="true">{nameInitials(visit.provider.name)}</span>
+        {visit.provider.name}, {visit.provider.credential}
+      </p>
+
+      {canJoin && (
+        <a className="btn" href={href("visits", visit.id, "join")} style={{ marginTop: 18 }}>
+          <Icon name="video" size={20} /> Join visit
+        </a>
+      )}
+
+      <div className="pcard-foot">
+        <span>{visit.kind}</span>
+        {visit.status === "confirmed"
+          ? <span className="chip ok">Confirmed</span>
+          : <span className="chip warn">Not confirmed yet</span>}
+      </div>
+    </section>
+  );
+}
+
+function VisitRow({ visit, showKind }: { visit: Visit; showKind?: boolean }) {
+  return (
+    <a className="trow" href={href("visits", visit.id)}>
+      <span className="grow">
+        <strong>{longDate(visit.startAt)}</strong>
+        <span className="meta">
+          {showKind ? visit.kind : time(visit.startAt)} · {visit.provider.name}
+          {visit.telehealth && !showKind ? " · Video" : ""}
+        </span>
+      </span>
+      <span className="chev"><Icon name="chevron" size={18} /></span>
+    </a>
   );
 }
 
@@ -64,37 +121,60 @@ function VisitDetail({ id }: { id: string }) {
 
   return (
     <>
-      <a className="muted" href={href("visits")} style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
+      <a className="backlink" href={href("visits")}>
         <Icon name="back" size={16} /> All visits
       </a>
 
-      <section className="hero">
-        <span className="eyebrow">{isPast ? "Past visit" : canJoin ? `Starts ${until(visit.startAt)}` : "Upcoming"}</span>
-        <h2>{longDate(visit.startAt)}</h2>
-        <p className="sub">
-          {time(visit.startAt)} · {visit.provider.name}, {visit.provider.credential} · {visit.kind}
-        </p>
-      </section>
+      <section className={`pcard${isPast ? "" : " blue"}`}>
+        <div className="pcard-head">
+          <span className="lbl">
+            <Icon name="calendar" size={16} />
+            {isPast ? "Past visit" : canJoin ? `Starts ${until(visit.startAt)}` : `In ${until(visit.startAt).replace(/^in /, "")}`}
+          </span>
+        </div>
 
-      {canJoin && (
-        <a className="btn" href={href("visits", visit.id, "join")}>
-          <Icon name="video" size={20} /> Join visit
-        </a>
-      )}
+        <h2 className="headline">
+          <b>{longDate(visit.startAt)}</b> at <b>{time(visit.startAt)}</b>
+          {visit.telehealth && <span className="inline-pill"><Icon name="video" size={14} /> Video</span>}
+        </h2>
+
+        <p className="who">
+          <span className="inline-face" aria-hidden="true">{nameInitials(visit.provider.name)}</span>
+          {visit.provider.name}, {visit.provider.credential}
+        </p>
+
+        {canJoin && (
+          <a className="btn" href={href("visits", visit.id, "join")} style={{ marginTop: 18 }}>
+            <Icon name="video" size={20} /> Join visit
+          </a>
+        )}
+
+        <div className="pcard-foot"><span>{visit.kind}</span></div>
+      </section>
 
       {/* A purpose-written patient artifact — deliberately not the clinical note. */}
       {visit.afterVisitSummary && (
-        <section className="card">
-          <span className="eyebrow-s">What we decided</span>
-          <p style={{ marginTop: 8 }}>{visit.afterVisitSummary}</p>
+        <section className="pcard">
+          <div className="pcard-head"><span className="lbl">What we decided</span></div>
+          <p className="body">{visit.afterVisitSummary}</p>
         </section>
       )}
 
       {!isPast && (
-        <>
-          <ActionRow quiet title="Reschedule or cancel" to={href("messages")} />
-          <ActionRow quiet title="Add to your calendar" onClick={() => {}} />
-        </>
+        <section className="pcard">
+          <div className="pcard-head"><span className="lbl">Change this visit</span></div>
+          <div className="tlist">
+            <a className="trow" href={href("messages")}>
+              <span className="grow"><strong>Reschedule or cancel</strong>
+                <span className="meta">We'll reply within one business day</span></span>
+              <span className="chev"><Icon name="chevron" size={18} /></span>
+            </a>
+            <button className="trow" onClick={() => {}}>
+              <span className="grow"><strong>Add to your calendar</strong></span>
+              <span className="chev"><Icon name="chevron" size={18} /></span>
+            </button>
+          </div>
+        </section>
       )}
 
       <p className="muted" style={{ textAlign: "center" }}>

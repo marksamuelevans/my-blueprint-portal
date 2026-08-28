@@ -154,7 +154,11 @@ a { color: var(--p-link); }
 /* The OS status colours are tuned against its canvas; the tints sit a step
    below that, where stable lands at 4.35:1 and at-risk at 4.39:1. Both step
    one shade darker inside a panel and clear 4.5:1 on all three tints. */
-.pcard { --p-ok: #0A6A5D; --p-warn: #8A5C10; }
+.pcard {
+  --p-ok: #0A6A5D; --p-warn: #8A5C10;
+  /* brand-900 is 4.42:1 on the sand tint — brand-600 clears 6:1 on all three. */
+  --p-link: var(--bp-brand-600);
+}
 
 .pcard-head {
   display: flex; align-items: center; gap: 10px;
@@ -239,54 +243,28 @@ a { color: var(--p-link); }
 .trow .meta { font-size: var(--p-small); color: var(--bp-ink-500); }
 .trow .chev { color: var(--bp-ink-400); flex-shrink: 0; }
 
+/* A message you sent — quieter than a panel from the practice, and
+   deliberately not one of the three meaning tints. */
+.pcard.mine { --tint: var(--bp-bone-100); }
+
+/* The head label carries the panel's tone when the panel itself stays
+   white: a red panel for "messages aren't for emergencies" would alarm
+   the people least able to afford it. */
+.pcard-head .lbl.alert { color: var(--bp-critical); }
+.pcard-head .lbl.ok    { color: var(--p-ok); }
+
+/* Money is a fact, not a headline — it gets the numeral treatment and the
+   sentence around it stays small. */
+.money-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
+
+.pcard .body { margin-top: 10px; }
+.pcard .body + .body { margin-top: 8px; }
+.pcard > .btn, .pcard > .btn-row { margin-top: 16px; }
+
 .excerpt {
   margin-top: 10px; color: var(--bp-ink-600); font-size: var(--p-small);
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-
-/* ---------- surfaces carried over ---------- */
-.card {
-  background: var(--bp-surface); border: 1px solid var(--bp-bone-300);
-  border-radius: var(--p-radius); padding: 18px 18px;
-}
-/* Ink-900 would vanish into the shell — step the dark card up one. */
-.hero {
-  background: var(--bp-ink-700); color: var(--bp-bone-50);
-  border-radius: var(--p-radius-xl); padding: 20px 18px;
-}
-.hero .eyebrow {
-  font-family: var(--bp-font-mono); font-size: 11px; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--bp-brand-300);
-}
-.hero h2 { color: #fff; margin: 6px 0 2px; }
-.hero .sub { color: var(--bp-ink-300); font-size: var(--p-small); }
-
-.action {
-  display: flex; align-items: center; gap: 14px;
-  background: var(--bp-surface); border: 1px solid var(--bp-bone-300);
-  border-left: 3px solid var(--bp-at-risk);
-  border-radius: var(--p-radius); padding: 16px 18px;
-  text-decoration: none; min-height: var(--p-touch);
-  font-size: var(--p-text); text-align: left; width: 100%; cursor: pointer;
-}
-.action:focus-visible { box-shadow: var(--bp-focus-ring); outline: none; }
-.action .grow { flex: 1; }
-.action .chev { color: var(--bp-ink-400); flex-shrink: 0; }
-.action strong { display: block; font-family: var(--bp-font-display); font-weight: var(--bp-weight-semi); }
-.action .meta { font-size: var(--p-small); color: var(--bp-ink-500); }
-.action.quiet { border-left-color: var(--bp-bone-300); }
-
-.row {
-  display: flex; align-items: center; gap: 14px; width: 100%;
-  min-height: var(--p-touch); padding: 14px 0;
-  border-bottom: 1px solid var(--bp-bone-300);
-  text-decoration: none; background: none; border-left: 0; border-right: 0; border-top: 0;
-  font-size: var(--p-text); text-align: left; cursor: pointer;
-}
-.row:last-child { border-bottom: 0; }
-.row .grow { flex: 1; min-width: 0; }
-.row strong { display: block; font-family: var(--bp-font-display); font-weight: var(--bp-weight-semi); }
-.row .meta { font-size: var(--p-small); color: var(--bp-ink-500); }
 
 /* ---------- buttons ---------- */
 .btn {
@@ -308,17 +286,18 @@ a { color: var(--p-link); }
 .btn.ink:hover { background: var(--bp-ink-700); }
 .btn.white { background: #fff; color: var(--bp-ink-800); }
 .btn.white:hover { background: var(--bp-bone-100); }
-.btn.on-dark { background: rgba(255,255,255,.14); color: #fff; border-color: transparent; }
-.btn.on-dark:hover { background: rgba(255,255,255,.22); }
 .btn-row { display: flex; gap: 10px; }
 .btn-row .btn { width: auto; flex: 1; }
 
 /* ---------- misc ---------- */
-.hello { font-size: 19px; font-weight: var(--bp-weight-semi); color: #fff; padding: 6px 2px 2px; }
-.eyebrow-s {
-  font-family: var(--bp-font-display); font-size: 12px; font-weight: var(--bp-weight-semi);
-  letter-spacing: 0.12em; text-transform: uppercase; color: var(--p-muted);
+.backlink {
+  display: inline-flex; align-items: center; gap: 6px;
+  align-self: flex-start; min-height: 44px; padding: 0 2px;
+  color: var(--p-muted); font-size: var(--p-small);
+  font-weight: var(--bp-weight-semi); text-decoration: none;
 }
+.backlink:focus-visible { box-shadow: var(--bp-focus-ring); outline: none; border-radius: 8px; }
+.hello { font-size: 19px; font-weight: var(--bp-weight-semi); color: #fff; padding: 6px 2px 2px; }
 .empty { padding: 40px 20px; text-align: center; color: var(--p-muted); font-size: var(--p-small); }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;

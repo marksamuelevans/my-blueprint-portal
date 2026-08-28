@@ -1,7 +1,7 @@
 import * as api from "../data/api";
 import { useAsync } from "../data/useAsync";
 import { href, useRoute } from "../router";
-import { ActionRow, Empty, ErrorNote, Loading } from "../ui/bits";
+import { Empty, ErrorNote, Loading } from "../ui/bits";
 import { Icon } from "../ui/icons";
 import { shortDate, time } from "../format";
 
@@ -15,14 +15,20 @@ function ThreadList() {
   if (loading) return <Loading />;
   if (error) return <ErrorNote message={error} />;
 
+  const unread = data?.filter((t) => t.unread).length ?? 0;
+
   return (
     <>
-      <h1>Messages</h1>
+      <h1 className="hello">Messages</h1>
 
-      {/* SLA and crisis routing sit above the list, never buried in a footer. */}
-      <section className="card" style={{ borderLeft: "3px solid var(--bp-critical)" }}>
-        <strong>Messages aren't for emergencies</strong>
-        <p className="muted" style={{ marginTop: 4 }}>
+      {/* SLA and crisis routing sit above the list, never buried in a footer.
+          The panel stays white — a red card would alarm the people least able
+          to afford it — and only the label carries the tone. */}
+      <section className="pcard">
+        <div className="pcard-head">
+          <span className="lbl alert">Messages aren't for emergencies</span>
+        </div>
+        <p className="body">
           We reply within one business day. If something is urgent, call{" "}
           <a href="tel:+16155550100">(615) 555-0100</a>. If you're in crisis,{" "}
           <a href={href("crisis")}>get help now</a>.
@@ -30,15 +36,30 @@ function ThreadList() {
       </section>
 
       {data?.length ? (
-        data.map((t) => (
-          <ActionRow
-            key={t.id}
-            quiet={!t.unread}
-            title={t.subject}
-            meta={`${shortDate(t.updatedAt)}${t.unread ? " · New reply" : ""}`}
-            to={href("messages", t.id)}
-          />
-        ))
+        <section className="pcard">
+          <div className="pcard-head">
+            <span className="lbl">Your conversations</span>
+            {unread > 0 && (
+              <>
+                <span className="sp" />
+                <span className="chip warn">{unread} new</span>
+              </>
+            )}
+          </div>
+          <div className="tlist">
+            {data.map((t) => (
+              <a className="trow" key={t.id} href={href("messages", t.id)}>
+                <span className="grow">
+                  <strong>{t.subject}</strong>
+                  <span className="meta">
+                    {shortDate(t.updatedAt)}{t.unread ? " · New reply" : ""}
+                  </span>
+                </span>
+                <span className="chev"><Icon name="chevron" size={18} /></span>
+              </a>
+            ))}
+          </div>
+        </section>
       ) : (
         <Empty>No messages yet.</Empty>
       )}
@@ -56,16 +77,23 @@ function ThreadView({ id }: { id: string }) {
 
   return (
     <>
-      <a className="muted" href={href("messages")} style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
+      <a className="backlink" href={href("messages")}>
         <Icon name="back" size={16} /> Messages
       </a>
-      <h1>{data.subject}</h1>
+      <h1 className="hello">{data.subject}</h1>
+
       {data.messages.map((m) => (
-        <section key={m.id} className="card" style={m.from === "patient" ? { background: "var(--bp-brand-100)", borderColor: "transparent" } : undefined}>
-          <span className="eyebrow-s">{m.authorName} · {shortDate(m.sentAt)} at {time(m.sentAt)}</span>
-          <p style={{ marginTop: 8 }}>{m.body}</p>
+        <section className={`pcard${m.from === "patient" ? " mine" : ""}`} key={m.id}>
+          <div className="pcard-head">
+            <span className="lbl">
+              {m.from === "patient" ? "You" : m.authorName} · {shortDate(m.sentAt)} at {time(m.sentAt)}
+            </span>
+          </div>
+          <p className="body">{m.body}</p>
         </section>
       ))}
+
+      <a className="btn ghost" href={href("messages", "new")}>Reply</a>
     </>
   );
 }

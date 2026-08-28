@@ -1,6 +1,7 @@
 import * as api from "../data/api";
 import { useAsync } from "../data/useAsync";
-import { ActionRow, Empty, ErrorNote, Loading, SectionTitle } from "../ui/bits";
+import { Empty, ErrorNote, Loading } from "../ui/bits";
+import { Icon } from "../ui/icons";
 import { money, shortDate } from "../format";
 
 export default function Billing() {
@@ -13,62 +14,92 @@ export default function Billing() {
 
   return (
     <>
-      <h1>Billing</h1>
+      <h1 className="hello">Billing</h1>
 
       {b.balanceCents > 0 ? (
-        <section className="hero">
-          <span className="eyebrow">Balance due</span>
-          <h2>{money(b.balanceCents)}</h2>
-          <p className="sub">
+        /* Money owed is the one thing on this screen waiting on the patient,
+           so it takes the same sand panel it has on Home. */
+        <section className="pcard sand">
+          <div className="pcard-head"><span className="lbl">Balance due</span></div>
+          <p className="bignum">{money(b.balanceCents)}</p>
+          <p className="body muted">
             {b.cardOnFile ? `${b.cardOnFile.brand} ending ${b.cardOnFile.last4} on file` : "No card on file"}
           </p>
-          <button className="btn" style={{ marginTop: 16, background: "#fff", color: "var(--bp-ink-900)" }}>
-            Pay {money(b.balanceCents)}
-          </button>
+          <button className="btn">Pay {money(b.balanceCents)}</button>
+          <div className="pcard-foot">
+            <span>Questions about a charge? Call <a href="tel:+16155550100">(615) 555-0100</a></span>
+          </div>
         </section>
       ) : (
-        <section className="card">
-          <strong>You're all paid up</strong>
-          <p className="muted" style={{ marginTop: 4 }}>Nothing is due right now.</p>
+        <section className="pcard mint">
+          <div className="pcard-head">
+            <span className="lbl ok"><Icon name="check" size={16} /> All paid up</span>
+          </div>
+          <h2 className="headline sm">Nothing is due right now.</h2>
         </section>
       )}
 
-      <SectionTitle>Statements</SectionTitle>
-      {b.statements.length ? (
-        b.statements.map((s) => (
-          <ActionRow
-            key={s.id}
-            quiet={s.paid}
-            title={`${s.description} — ${money(s.amountCents)}`}
-            meta={`${shortDate(s.date)}${s.paid ? " · Paid" : " · Due"}`}
-            onClick={() => {}}
-          />
-        ))
-      ) : (
-        <Empty>No statements yet.</Empty>
-      )}
+      <section className="pcard">
+        <div className="pcard-head"><span className="lbl">Statements</span></div>
+        {b.statements.length ? (
+          <div className="tlist">
+            {b.statements.map((s) => (
+              <button className="trow" key={s.id} onClick={() => {}}>
+                <span className="grow">
+                  <strong>{s.description} — {money(s.amountCents)}</strong>
+                  <span className="meta">{shortDate(s.date)} · {s.paid ? "Paid" : "Due"}</span>
+                </span>
+                <span className="chev"><Icon name="chevron" size={18} /></span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="muted" style={{ marginTop: 6 }}>No statements yet.</p>
+        )}
+      </section>
 
-      <SectionTitle>Insurance</SectionTitle>
       {ins.data ? (
-        <section className="card">
-          <strong>{ins.data.payer}</strong>
-          <p className="muted" style={{ marginTop: 2 }}>Member {ins.data.memberId}</p>
-          <p className={`chip ${ins.data.status === "active" ? "ok" : "warn"}`} style={{ marginTop: 10 }}>
-            {ins.data.status === "active" ? "Active coverage" : "Coverage needs checking"}
-          </p>
+        <section className="pcard">
+          <div className="pcard-head">
+            <span className="lbl">Insurance</span>
+            <span className="sp" />
+            <span className={`chip ${ins.data.status === "active" ? "ok" : "warn"}`}>
+              {ins.data.status === "active" ? "Active" : "Needs checking"}
+            </span>
+          </div>
+          <h2 className="headline sm">{ins.data.payer}</h2>
+          <p className="body muted">Member {ins.data.memberId}</p>
           {ins.data.copayCents !== null && (
-            <p className="muted" style={{ marginTop: 8 }}>
-              Your visit copay is {money(ins.data.copayCents)}
-              {ins.data.checkedAt ? ` · checked ${shortDate(ins.data.checkedAt)}` : ""}
-            </p>
+            <div className="pcard-foot">
+              <span>
+                Your visit copay is {money(ins.data.copayCents)}
+                {ins.data.checkedAt ? ` · checked ${shortDate(ins.data.checkedAt)}` : ""}
+              </span>
+            </div>
           )}
         </section>
-      ) : (
+      ) : ins.loading ? (
         <Loading lines={1} />
+      ) : (
+        <Empty>No insurance on file.</Empty>
       )}
 
-      <ActionRow quiet title="Payment methods" onClick={() => {}} />
-      <ActionRow quiet title="Download a superbill" meta="For out-of-network reimbursement" onClick={() => {}} />
+      <section className="pcard">
+        <div className="pcard-head"><span className="lbl">More</span></div>
+        <div className="tlist">
+          <button className="trow" onClick={() => {}}>
+            <span className="grow"><strong>Payment methods</strong></span>
+            <span className="chev"><Icon name="chevron" size={18} /></span>
+          </button>
+          <button className="trow" onClick={() => {}}>
+            <span className="grow">
+              <strong>Download a superbill</strong>
+              <span className="meta">For out-of-network reimbursement</span>
+            </span>
+            <span className="chev"><Icon name="chevron" size={18} /></span>
+          </button>
+        </div>
+      </section>
     </>
   );
 }

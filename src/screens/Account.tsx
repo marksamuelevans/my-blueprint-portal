@@ -1,10 +1,27 @@
 import * as api from "../data/api";
 import { useAsync } from "../data/useAsync";
 import { href } from "../router";
-import { ActionRow, ErrorNote, Loading, SectionTitle } from "../ui/bits";
+import { ErrorNote, Loading } from "../ui/bits";
 import { Icon } from "../ui/icons";
 import { shortDate } from "../format";
 import { signOut } from "../data/auth";
+
+type RowProps = { title: string; meta?: React.ReactNode; to?: string };
+
+function Row({ title, meta, to }: RowProps) {
+  const inner = (
+    <>
+      <span className="grow">
+        <strong>{title}</strong>
+        {meta && <span className="meta">{meta}</span>}
+      </span>
+      <span className="chev"><Icon name="chevron" size={18} /></span>
+    </>
+  );
+  return to
+    ? <a className="trow" href={to}>{inner}</a>
+    : <button className="trow" onClick={() => {}}>{inner}</button>;
+}
 
 export default function Account({ onSignOut }: { onSignOut: () => void }) {
   const { data, loading, error } = useAsync(() => api.getHomeSummary(), []);
@@ -14,34 +31,50 @@ export default function Account({ onSignOut }: { onSignOut: () => void }) {
 
   return (
     <>
-      <a className="muted" href={href("home")} style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
+      <a className="backlink" href={href("home")}>
         <Icon name="back" size={16} /> Home
       </a>
 
-      <h1>{p.preferredName ?? p.firstName} {p.lastName}</h1>
-      <p className="muted">Born {shortDate(p.dob)}</p>
+      <section className="pcard">
+        <div className="pcard-head"><span className="lbl">Born {shortDate(p.dob)}</span></div>
+        <h2 className="headline sm">{p.preferredName ?? p.firstName} {p.lastName}</h2>
+        <div className="tlist">
+          <Row title="Contact information" meta={<>{p.mobile}<br />{p.email}</>} />
+          <Row title="Insurance on file" to={href("billing")} />
+          <Row title="Documents and forms" />
+        </div>
+      </section>
 
-      <SectionTitle>Your details</SectionTitle>
-      <ActionRow quiet title="Contact information" meta={<>{p.mobile}<br />{p.email}</>} onClick={() => {}} />
-      <ActionRow quiet title="Insurance on file" to={href("billing")} />
-      <ActionRow quiet title="Documents and forms" onClick={() => {}} />
+      <section className="pcard">
+        <div className="pcard-head"><span className="lbl">Notifications</span></div>
+        <div className="tlist">
+          <Row title="How we reach you" meta="Text, email, and app alerts" />
+        </div>
+        <div className="pcard-foot">
+          <span>
+            We never include health details in text messages or lock-screen alerts —
+            only that something is waiting for you here.
+          </span>
+        </div>
+      </section>
 
-      <SectionTitle>Notifications</SectionTitle>
-      <ActionRow quiet title="How we reach you" meta="Text, email, and app alerts" onClick={() => {}} />
-      <p className="muted">
-        We never include health details in text messages or lock-screen alerts — only that
-        something is waiting for you here.
-      </p>
+      <section className="pcard">
+        <div className="pcard-head"><span className="lbl">Security</span></div>
+        <div className="tlist">
+          <Row title="Password and two-step sign-in" />
+          <Row title="Where you're signed in" />
+        </div>
+      </section>
 
-      <SectionTitle>Security</SectionTitle>
-      <ActionRow quiet title="Password and two-step sign-in" onClick={() => {}} />
-      <ActionRow quiet title="Where you're signed in" onClick={() => {}} />
+      <section className="pcard">
+        <div className="pcard-head"><span className="lbl">Help</span></div>
+        <div className="tlist">
+          <Row title="Getting help now" to={href("crisis")} />
+          <Row title="Contact the office" meta="(615) 555-0100" />
+        </div>
+      </section>
 
-      <SectionTitle>Help</SectionTitle>
-      <ActionRow quiet title="Getting help now" to={href("crisis")} />
-      <ActionRow quiet title="Contact the office" meta="(615) 555-0100" onClick={() => {}} />
-
-      <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => { signOut(); onSignOut(); }}>
+      <button className="btn ghost" onClick={() => { signOut(); onSignOut(); }}>
         Sign out
       </button>
     </>

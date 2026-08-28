@@ -10,11 +10,11 @@ import { Icon } from "../ui/icons";
 export default function Crisis() {
   return (
     <>
-      <a className="muted" href={href("home")} style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
+      <a className="backlink" href={href("home")}>
         <Icon name="back" size={16} /> Back
       </a>
 
-      <h1>Getting help now</h1>
+      <h1 className="hello">Getting help now</h1>
       <p className="muted">
         If you're in danger or thinking about harming yourself, please use one of these. They're available
         all day, every day.
@@ -33,9 +33,9 @@ export default function Crisis() {
       <a className="btn ghost" href="tel:911">Call 911</a>
       <p className="muted" style={{ marginTop: -4 }}>If you or someone else is in immediate physical danger.</p>
 
-      <section className="card" style={{ marginTop: 8 }}>
-        <strong>Reaching Blueprint</strong>
-        <p className="muted" style={{ marginTop: 6 }}>
+      <section className="pcard" style={{ marginTop: 8 }}>
+        <div className="pcard-head"><span className="lbl">Reaching Blueprint</span></div>
+        <p className="body muted">
           Our office is open weekdays. Call <a href="tel:+16155550100">(615) 555-0100</a>.
           Messages in this app are answered within one business day, so please don't use them
           for anything urgent.
