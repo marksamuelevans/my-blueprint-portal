@@ -1,0 +1,120 @@
+/* ============================================================
+   BLUEPRINT DESIGN SYSTEM — TOKENS
+   Derived from the Tabela visual language, evolved for a
+   dense clinical product surface.
+   Drop this in as your single source of truth.
+   ============================================================ */
+
+:root {
+  /* --- COOL NEUTRALS (handoff 2026-08: single hue family ~218) --- */
+  --bp-bone-50:  #FFFFFF;   /* light text on dark surfaces */
+  --bp-bone-100: #F3F7FD;   /* blue-50: hover on white, medallion fill */
+  --bp-bone-200: #FFFFFF;   /* cards, panels (white on the cool canvas) */
+  --bp-bone-300: #E3E8EE;   /* every 1px border and divider on light */
+  --bp-bone-400: #E9EDF3;   /* disabled fill / inset wells */
+  --bp-surface:  #FFFFFF;   /* cards, sheets, inputs */
+  --bp-canvas:   #F5F7FA;   /* page background behind cards */
+  --bp-surface-alt: #E9EDF3; /* segmented-control track, inset wells */
+
+  /* --- INK (text) + on-dark set (inside blue-900 surfaces) ------- */
+  --bp-ink-900: #0E1B2E;    /* app shell + hero card (blue-900) */
+  --bp-ink-800: #111A24;    /* headings, primary values */
+  --bp-ink-700: #182842;    /* hover fill on dark, filled metric chip */
+  --bp-ink-600: #4A5663;    /* body copy, secondary text */
+  --bp-ink-500: #4A5663;    /* body copy, secondary text */
+  --bp-ink-400: #8A96A3;    /* eyebrows, placeholders, zero values on light */
+  --bp-ink-300: #8FA3BC;    /* subtitle / date line on dark */
+  --bp-on-dark-nav:  #A9B8C9; /* inactive nav labels */
+  --bp-on-dark-low:  #74859B; /* zero-value metrics, nav icon strokes (handoff #6C7C90 nudged to 4.6:1 on the shell) */
+  --bp-on-dark-line: #24354F; /* outlined metric chip border on dark */
+
+  /* --- BRAND (blue ramp anchored on the logo mark #9EBFE8, step 300) -- */
+  --bp-brand-100: #E1EBF8;   /* secondary button fill, selected row */
+  --bp-brand-200: #C6D9F1;   /* secondary button hover, hairline on tints */
+  --bp-brand-300: #9EBFE8;   /* THE LOGO MARK: tint on dark, badges, OS wordmark */
+  --bp-brand-400: #6C9AD9;   /* charts, secondary data series */
+  --bp-brand-600: #2453A8;   /* primary hover / pressed */
+  --bp-brand-700: #1B3D7A;   /* text on light-blue fills, dark avatar chips */
+  --bp-brand-900: #2F6BD6;   /* PRIMARY: filled buttons, active nav, links, focus */
+
+  /* --- SEMANTIC (desaturated: status never out-shouts the primary) --- */
+  --bp-stable:      #0C7A6B;  /* handoff #0E8F7E darkened one step: 4.9:1 on canvas (was 3.7) */  --bp-stable-bg:   #E3F3F0;  --bp-stable-br:   #BFE0DA;
+  --bp-scheduled:   #2453A8;  --bp-scheduled-bg:#E1EBF8;  --bp-scheduled-br:#C6D9F1;
+  --bp-review:      #5B4BC4;  --bp-review-bg:   #ECE9F8;  --bp-review-br:   #D5CFEF;
+  --bp-at-risk:     #926211;  /* handoff #C4841D darkened: 4.9:1 on canvas (was 2.9) */  --bp-at-risk-bg:  #FAF0DC;  --bp-at-risk-br:  #ECD9B0;
+  --bp-critical:    #C64545;  --bp-critical-bg: #F8E7E7;  --bp-critical-br: #EFC7C7;
+  --bp-neutral:     #5B6672;  --bp-neutral-bg:  #E9EDF3;  --bp-neutral-br:  #E3E8EE;
+
+  /* --- TYPE ---------------------------------------------- */
+  --bp-font-display: "Outfit", system-ui, sans-serif;
+  --bp-font-text:    "Instrument Sans", system-ui, sans-serif;
+  --bp-font-mono:    "IBM Plex Mono", ui-monospace, monospace;
+
+  --bp-size-display-xl: 64px;  --bp-lh-display-xl: 1.02;  --bp-ls-display-xl: -0.032em;
+  --bp-size-display-l:  48px;  --bp-lh-display-l:  1.05;  --bp-ls-display-l:  -0.028em;
+  --bp-size-display-m:  36px;  --bp-lh-display-m:  1.10;  --bp-ls-display-m:  -0.022em;
+  --bp-size-h1:         28px;  --bp-lh-h1:         1.20;  --bp-ls-h1:         -0.016em;
+  --bp-size-h2:         22px;  --bp-lh-h2:         1.27;  --bp-ls-h2:         -0.011em;
+  --bp-size-h3:         18px;  --bp-lh-h3:         1.35;  --bp-ls-h3:         -0.006em;
+  --bp-size-body-l:     17px;  --bp-lh-body-l:     1.60;
+  --bp-size-body:       15px;  --bp-lh-body:       1.60;
+  --bp-size-small:      13px;  --bp-lh-small:      1.50;
+  --bp-size-micro:      11px;  --bp-lh-micro:      1.40;  --bp-ls-micro: 0.09em;
+
+  --bp-weight-regular: 400;
+  --bp-weight-medium:  500;
+  --bp-weight-semi:    600;
+
+  /* --- SPACE (4px base, airy rhythm) --------------------- */
+  --bp-space-1:  4px;
+  --bp-space-2:  8px;
+  --bp-space-3:  12px;
+  --bp-space-4:  16px;
+  --bp-space-5:  24px;
+  --bp-space-6:  32px;
+  --bp-space-7:  48px;
+  --bp-space-8:  64px;
+  --bp-space-9:  96px;
+  --bp-space-10: 128px;
+
+  /* Density multipliers — swap on a wrapper to compact a view */
+  --bp-density: 1;              /* airy (default) */
+  /* [data-density="balanced"] { --bp-density: .8 }  */
+  /* [data-density="compact"]  { --bp-density: .64 } */
+  --bp-row-y: calc(20px * var(--bp-density));
+  --bp-row-x: calc(24px * var(--bp-density));
+
+  /* --- RADIUS -------------------------------------------- */
+  --bp-radius-xs:   8px;    /* chips, swatches, segmented thumb */
+  --bp-radius-sm:   10px;   /* inputs, buttons, nav items, dropdowns */
+  --bp-radius-md:   10px;   /* list rows, nested panels */
+  --bp-radius-lg:   14px;   /* content panels */
+  --bp-radius-xl:   16px;   /* hero card, app frame */
+  --bp-radius-pill: 999px;  /* metric chips, avatars, badges */
+
+  /* --- ELEVATION ----------------------------------------- */
+  --bp-shadow-sm: 0 1px 2px rgba(16,24,40,.06);
+  --bp-shadow-md: 0 1px 3px rgba(16,24,40,.08);
+  --bp-shadow-lg: 0 8px 24px rgba(14,27,46,.12);
+  --bp-shadow-inset: inset 0 1px 2px rgba(16,24,40,.05);
+
+  --bp-focus-ring: 0 0 0 3px rgba(47,107,214,.35);
+  --bp-focus-ring-brand: 0 0 0 3px rgba(47,107,214,.35);
+
+  /* --- MOTION -------------------------------------------- */
+  --bp-ease:        cubic-bezier(.2, .8, .2, 1);
+  --bp-ease-spring: cubic-bezier(.34, 1.32, .64, 1);
+  --bp-dur-1: 120ms;   /* hover, color */
+  --bp-dur-2: 180ms;   /* press, small transform */
+  --bp-dur-3: 260ms;   /* panels, tabs, accordion */
+  --bp-dur-4: 400ms;   /* sheets, page transitions */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* Density wrappers (from the token comments). Density is a spacing decision only. */
+[data-density="airy"]     { --bp-density: 1; }
+[data-density="balanced"] { --bp-density: .8; }
+[data-density="compact"]  { --bp-density: .64; }
