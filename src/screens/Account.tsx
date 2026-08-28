@@ -25,7 +25,7 @@ function Row({ title, meta, to }: RowProps) {
 
 export default function Account({ onSignOut }: { onSignOut: () => void }) {
   const { data, loading, error } = useAsync(() => api.getHomeSummary(), []);
-  if (loading) return <Loading />;
+  if (loading && !data) return <Loading />;
   if (error || !data) return <ErrorNote message={error ?? "We couldn't load your account."} />;
   const p = data.patient;
 
@@ -34,6 +34,8 @@ export default function Account({ onSignOut }: { onSignOut: () => void }) {
       <a className="backlink" href={href("home")}>
         <Icon name="back" size={16} /> Home
       </a>
+
+      <h1 className="sr-only">Your account</h1>
 
       <section className="pcard">
         <div className="pcard-head"><span className="lbl">Born {shortDate(p.dob)}</span></div>

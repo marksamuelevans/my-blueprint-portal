@@ -14,6 +14,7 @@ import { isSignedIn } from "./data/auth";
 import { useAsync } from "./data/useAsync";
 import * as api from "./data/api";
 import { initials } from "./format";
+import { say } from "./live";
 
 const TITLES: Record<string, string> = {
   home: "Home", visits: "Visits", messages: "Messages",
@@ -34,12 +35,20 @@ export default function App() {
 
 function Portal({ onSignOut }: { onSignOut: () => void }) {
   const route = useRoute();
-  const { data } = useAsync(() => api.getHomeSummary(), []);
+  const key = route.path.join("/");
+  /* Refetched per route so the unread dot clears once the thread is read —
+     the summary is one cheap call by design. */
+  const { data } = useAsync(() => api.getHomeSummary(), [route.screen, key]);
 
   useEffect(() => {
-    document.title = `${TITLES[route.screen] ?? "Home"} · My Blueprint`;
+    const name = TITLES[route.screen] ?? "Home";
+    document.title = `${name} · My Blueprint`;
     window.scrollTo(0, 0);
-  }, [route.screen, route.path.join("/")]);
+    say(name);
+    /* Move focus out of the page the user just left. Without this a route
+       change drops focus to <body> and a screen reader says nothing. */
+    document.getElementById("main")?.focus({ preventScroll: true });
+  }, [route.screen, key]);
 
   const who = data?.patient;
   return (

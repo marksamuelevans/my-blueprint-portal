@@ -80,6 +80,10 @@ export default function Billing() {
         </section>
       ) : ins.loading ? (
         <Loading lines={1} />
+      ) : ins.error ? (
+        /* "No insurance on file" is a claim about the patient's coverage.
+           A failed request is not that claim. */
+        <ErrorNote message="We couldn't load your insurance just now." />
       ) : (
         <Empty>No insurance on file.</Empty>
       )}

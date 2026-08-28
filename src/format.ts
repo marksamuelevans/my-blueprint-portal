@@ -10,17 +10,24 @@ const NB = "\u00A0";
 const glueTrailingNumber = (s: string) => s.replace(/ (\d+)$/, NB + "$1");
 const glueMeridiem = (s: string) => s.replace(/[\s\u202F](AM|PM|am|pm)$/, NB + "$1");
 
+/* new Date("2026-08-01") is parsed as UTC MIDNIGHT by spec, then formatted in
+   local time — so every date-only value renders a day early anywhere west of
+   UTC, which is all of Tennessee. Date-times without a zone are already local,
+   so only the bare-date form needs pinning. */
+const at = (iso: string) =>
+  new Date(/^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso + "T00:00:00" : iso);
+
 export const money = (cents: number) =>
   (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
 
 export const time = (iso: string) =>
-  glueMeridiem(new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }));
+  glueMeridiem(at(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }));
 
 export const longDate = (iso: string) =>
-  glueTrailingNumber(new Date(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }));
+  glueTrailingNumber(at(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }));
 
 export const shortDate = (iso: string) =>
-  glueTrailingNumber(new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }));
+  glueTrailingNumber(at(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }));
 
 /** "in 8 minutes" · "tomorrow" · "in 6 days" — never a raw countdown. */
 export function until(iso: string): string {

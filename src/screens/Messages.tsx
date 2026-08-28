@@ -18,7 +18,7 @@ export default function Messages() {
 
 function ThreadList() {
   const { data, loading, error } = useAsync(() => api.getThreads(), []);
-  if (loading) return <Loading />;
+  if (loading && !data) return <Loading />;
   if (error) return <ErrorNote message={error} />;
   const unread = data?.filter((t) => t.unread).length ?? 0;
 

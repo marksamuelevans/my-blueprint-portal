@@ -6,11 +6,17 @@ import { useEffect, useState } from "react";
 
 export type AsyncState<T> = { data: T | null; loading: boolean; error: string | null };
 
+/* `loading` goes true again on every refetch. Screens that guard on it alone
+   unmount everything — including the button the patient just pressed, which
+   drops focus to <body> and throws the scroll to the top. Guard on
+   `loading && !data` instead; `data` is deliberately retained across a
+   refetch so the previous render survives until the new one resolves. */
+
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []): AsyncState<T> {
   const [state, setState] = useState<AsyncState<T>>({ data: null, loading: true, error: null });
   useEffect(() => {
     let alive = true;
-    setState((s) => ({ ...s, loading: true, error: null }));
+    setState((s) => ({ ...s, loading: true, error: null }));  // keeps `data`
     fn()
       .then((data) => { if (alive) setState({ data, loading: false, error: null }); })
       .catch(() => {

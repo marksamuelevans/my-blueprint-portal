@@ -121,14 +121,16 @@ function VisitDetail({ id }: { id: string }) {
   if (error) return <ErrorNote message={error} />;
   if (!visit) return <Empty>We couldn't find that visit.</Empty>;
 
-  const canJoin = visit.status !== "completed" && joinable(visit.startAt);
-  const isPast = visit.status === "completed";
+  const cancelled = visit.status === "cancelled";
+  const isPast = visit.status === "completed" || cancelled;
+  const canJoin = !isPast && joinable(visit.startAt);
 
   return (
     <>
       <a className="backlink" href={href("visits")}>
         <Icon name="back" size={16} /> All visits
       </a>
+      <h1 className="sr-only">{visit.kind} on {longDate(visit.startAt)}</h1>
 
       <section className={`pcard${isPast ? "" : " blue"}`}>
         <div className="pcard-head">
@@ -136,6 +138,7 @@ function VisitDetail({ id }: { id: string }) {
             <Icon name={visit.track === "therapy" ? "people" : "capsule"} size={16} />
             {visit.kind} · {isPast ? longDate(visit.startAt) : until(visit.startAt)}
           </span>
+          {cancelled && <><span className="sp" /><span className="chip warn">Cancelled</span></>}
         </div>
 
         <h2 className="headline">

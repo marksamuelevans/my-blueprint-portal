@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as api from "../data/api";
 import { useAsync } from "../data/useAsync";
 import { href, useRoute } from "../router";
@@ -6,6 +6,7 @@ import { ErrorNote, Loading } from "../ui/bits";
 import { Icon } from "../ui/icons";
 import { shortDate } from "../format";
 import type { PracticeItem } from "../data/types";
+import { say } from "../live";
 
 import Checkin from "./Checkin";
 
@@ -17,18 +18,33 @@ export default function Health() {
 
 function HealthHome() {
   const plan = useAsync(() => api.getTherapyPlan(), []);
+  const home = useAsync(() => api.getHomeSummary(), []);
   const [tick, setTick] = useState(0);
   const { data, loading, error } = useAsync(() => api.getMedications(), [tick]);
   const [busy, setBusy] = useState<string | null>(null);
+
+  const doneRef = useRef<HTMLDivElement | null>(null);
+  const [awaitingFocus, setAwaitingFocus] = useState(false);
+
+  useEffect(() => {
+    if (!awaitingFocus || !doneRef.current) return;
+    doneRef.current.focus();
+    setAwaitingFocus(false);
+  }, [awaitingFocus, data]);
 
   const refill = async (id: string) => {
     setBusy(id);
     await api.requestRefill(id);
     setBusy(null);
     setTick((t) => t + 1);
+    say("Refill requested. Allow 2 business days.");
+    /* The button is replaced by its own result, so focus would otherwise fall
+       to <body> and a keyboard user would be returned to the top of the page.
+       Focus once the refetch has actually rendered that result. */
+    setAwaitingFocus(true);
   };
 
-  if (loading) return <Loading />;
+  if (loading && !data) return <Loading />;
   if (error) return <ErrorNote message={error} />;
 
   return (
@@ -50,7 +66,7 @@ function HealthHome() {
             <p className="body muted">{m.sig}</p>
 
             {m.refill ? (
-              <div className="pcard-foot">
+              <div className="pcard-foot" tabIndex={-1} ref={doneRef}>
                 <span className="chip info">
                   Refill requested {shortDate(m.refill.requestedAt)} · allow 2 business days
                 </span>
@@ -119,19 +135,25 @@ function HealthHome() {
         </>
       )}
 
-      <section className="pcard sand">
-        <div className="pcard-head">
-          <span className="lbl">Check-in</span>
-          <span className="sp" />
-          <a className="iconbtn solid" href={href("health", "checkin")} aria-label="Start the check-in">
-            <Icon name="arrow" size={19} />
+      {/* Driven by formsDue, the same record Home renders. It was hardcoded
+          here, so the two screens disagreed and the sand tint stayed on after
+          the task was done. */}
+      {home.data?.formsDue.map((f) => (
+        <section className="pcard sand" key={f.id}>
+          <div className="pcard-head">
+            <span className="lbl">Before your visit</span>
+            <span className="sp" />
+            <a className="iconbtn solid" href={href("health", f.id === "f-1" ? "checkin" : "")}
+               aria-label={`Start: ${f.title}`}>
+              <Icon name="arrow" size={19} />
+            </a>
+          </div>
+          <a href={href("health", f.id === "f-1" ? "checkin" : "")} className="plain">
+            <h2 className="headline sm">{f.title}</h2>
+            <p className="body muted">About {f.minutes} minutes</p>
           </a>
-        </div>
-        <a href={href("health", "checkin")} className="plain">
-          <h2 className="headline sm">How you've been feeling</h2>
-          <p className="body muted">About 3 minutes · before your next visit</p>
-        </a>
-      </section>
+        </section>
+      ))}
 
       <section className="pcard">
         <div className="pcard-head"><span className="lbl">Your information</span></div>

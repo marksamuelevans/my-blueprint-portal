@@ -72,11 +72,48 @@ function Call({ visit }: { visit: NonNullable<Awaited<ReturnType<typeof api.getV
 
   const streamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const [level, setLevel] = useState(0);   // 0..1, smoothed RMS
 
   const stopStream = useCallback(() => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    void audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
+    setLevel(0);
+  }, []);
+
+  /* A mic meter that reads the real stream. "Say something and watch this
+     move" is the only device check a patient can actually verify — a green
+     tick claiming the mic works proves nothing to someone whose mic doesn't. */
+  const startMeter = useCallback((stream: MediaStream) => {
+    try {
+      const Ctx: typeof AudioContext =
+        window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new Ctx();
+      audioCtxRef.current = ctx;
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.75;
+      source.connect(analyser);
+      const buf = new Float32Array(analyser.fftSize);
+      const tick = () => {
+        analyser.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        const rms = Math.sqrt(sum / buf.length);
+        // speech sits low in linear RMS; this curve makes normal talking fill
+        // most of the meter without clipping on a loud room
+        setLevel(Math.min(1, Math.pow(rms * 7, 0.6)));
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    } catch { /* meter is a nicety; never block the visit on it */ }
   }, []);
 
   /* The device check is real, and it is opt-in. Nothing asks for the camera
@@ -87,13 +124,14 @@ function Call({ visit }: { visit: NonNullable<Awaited<ReturnType<typeof api.getV
     try {
       const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = s;
+      startMeter(s);
       setCamOn(true);
       setDeviceState("ok");
     } catch (e) {
       const name = (e as { name?: string })?.name ?? "";
       setDeviceState(name === "NotFoundError" ? "none" : "denied");
     }
-  }, []);
+  }, [startMeter]);
 
   useEffect(() => stopStream, [stopStream]);
 
@@ -243,6 +281,7 @@ function Call({ visit }: { visit: NonNullable<Awaited<ReturnType<typeof api.getV
       <a className="backlink" href={href("visits", visit.id)}>
         <Icon name="back" size={16} /> Visit details
       </a>
+      <h1 className="sr-only">Join your {visit.kind.toLowerCase()}</h1>
 
       <section className="pcard blue">
         <div className="pcard-head">
@@ -272,16 +311,36 @@ function Call({ visit }: { visit: NonNullable<Awaited<ReturnType<typeof api.getV
           {deviceState === "ok" && camOn
             ? <video ref={videoRef} autoPlay playsInline muted aria-label="Your camera preview" />
             : <span className="devcheck-face" aria-hidden="true">
-                <Icon name={deviceState === "ok" ? "video" : "videoOff"} size={26} />
+                <Icon name={deviceState === "ok" ? "video" : "videoOff"} size={30} />
               </span>}
         </div>
+
+        {deviceState === "ok" && (
+          <div className="meter-row">
+            <Icon name={micOn ? "mic" : "micOff"} size={18} />
+            <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={100}
+                 aria-valuenow={Math.round(level * 100)} aria-label="Microphone level">
+              <span className="meter-fill" style={{ transform: `scaleX(${micOn ? level : 0})` }} />
+            </div>
+            <span className="meter-hint">{micOn ? "Say something" : "Muted"}</span>
+          </div>
+        )}
 
         {deviceState === "idle" && (
           <button className="btn ghost" onClick={checkDevices}>Test camera and mic</button>
         )}
         {deviceState === "asking" && <p className="body muted">Waiting for your browser…</p>}
         {deviceState === "ok" && (
-          <p className="body"><span className="chip ok">Camera and mic are working</span></p>
+          <div className="devbtns">
+            <button className="btn ghost" onClick={toggleCam}>
+              <Icon name={camOn ? "video" : "videoOff"} size={19} />
+              {camOn ? "Camera on" : "Camera off"}
+            </button>
+            <button className="btn ghost" onClick={toggleMic}>
+              <Icon name={micOn ? "mic" : "micOff"} size={19} />
+              {micOn ? "Mic on" : "Muted"}
+            </button>
+          </div>
         )}
         {deviceState === "denied" && (
           <p className="body muted">

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as api from "../data/api";
 import { useAsync } from "../data/useAsync";
 import { href } from "../router";
 import { ErrorNote, Loading } from "../ui/bits";
 import { Icon } from "../ui/icons";
+import { say } from "../live";
 import { greeting, joinable, longDate, money, nameInitials, time, until } from "../format";
 
 /* The dashboard answers one question — what do I need to do right now —
@@ -17,8 +18,20 @@ export default function Home() {
   const [tick, setTick] = useState(0);
   const { data, loading, error } = useAsync(() => api.getHomeSummary(), [tick]);
   const [confirming, setConfirming] = useState(false);
+  const footRef = useRef<HTMLDivElement | null>(null);
+  const [justConfirmed, setJustConfirmed] = useState(false);
 
-  if (loading) return <Loading />;
+  /* The button is replaced by its own result, so focus would fall to <body>.
+     Wait for the refetch to actually render the result before moving to it —
+     a single rAF fires while the old data is still on screen. */
+  useEffect(() => {
+    if (!justConfirmed) return;
+    if (data?.nextVisit?.status !== "confirmed") return;
+    footRef.current?.focus();
+    setJustConfirmed(false);
+  }, [justConfirmed, data?.nextVisit?.status]);
+
+  if (loading && !data) return <Loading />;
   if (error || !data) return <ErrorNote message={error ?? "We couldn't load your home page."} />;
 
   const { patient, careTeam, nextVisit, formsDue, balanceCents, unreadMessages, lastVisit } = data;
@@ -35,6 +48,8 @@ export default function Home() {
     await api.confirmVisit(nextVisit.id);
     setConfirming(false);
     setTick((t) => t + 1);
+    say("Visit confirmed.");
+    setJustConfirmed(true);
   };
 
   return (
@@ -89,7 +104,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="pcard-foot">
+          <div className="pcard-foot" tabIndex={-1} ref={footRef}>
             {nextVisit.status === "confirmed" ? (
               <span className="chip ok">Confirmed — we'll see you then</span>
             ) : (

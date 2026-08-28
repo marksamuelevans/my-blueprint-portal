@@ -27,7 +27,10 @@ export default function Crisis() {
         The Suicide &amp; Crisis Lifeline — free, confidential, 24/7.
       </p>
 
-      <a className="btn ghost" href="sms:741741&body=HOME">Text HOME to 741741</a>
+      {/* RFC 5724 wants the query to open with "?". "sms:741741&body=HOME" is an
+          iOS quirk; Android parses the whole tail as the recipient, so the one
+          affordance offered to someone who cannot speak silently fails. */}
+      <a className="btn ghost" href="sms:741741?&body=HOME">Text HOME to 741741</a>
       <p className="muted" style={{ marginTop: -4 }}>Crisis Text Line, if talking is hard right now.</p>
 
       <a className="btn ghost" href="tel:911">Call 911</a>

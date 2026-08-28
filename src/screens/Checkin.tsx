@@ -5,6 +5,7 @@ import { href, navigate } from "../router";
 import { ErrorNote, Loading } from "../ui/bits";
 import { Icon } from "../ui/icons";
 import type { CheckinAnswer, CheckinResult } from "../data/types";
+import { say } from "../live";
 
 /* ============================================================
    "HOW YOU'VE BEEN FEELING" — PHQ-9 and GAD-7 before a visit.
@@ -42,7 +43,7 @@ export default function Checkin() {
   const safetyQ = useMemo(() => questions?.find((q) => q.safety), [questions]);
   const safetyEndorsed = safetyQ ? (answers[safetyQ.id] ?? 0) > 0 : false;
 
-  if (loading) return <Loading />;
+  if (loading && !questions) return <Loading />;
   if (error || !questions) return <ErrorNote message={error ?? "We couldn't load the check-in."} />;
 
   if (done) return <Submitted result={done} />;
@@ -53,6 +54,9 @@ export default function Checkin() {
     const res = await api.submitCheckin(payload);
     setBusy(false);
     setDone(res);
+    say(res.flagged
+      ? "Check-in sent. Because of one of your answers, the office has been notified."
+      : "Check-in sent.");
   };
 
   return (
