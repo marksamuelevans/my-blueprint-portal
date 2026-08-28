@@ -28,6 +28,14 @@ const paths: Record<string, ReactNode> = {
       <path d="m22 8-6 4 6 4z" />
     </>
   ),
+  arrow: <path d="M7 17 17 7M9 7h8v8" />,
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </>
+  ),
+  check: <path d="m4 12.5 5 5L20 6.5" />,
 };
 
 export function Icon({ name, size = 22 }: { name: string; size?: number }) {

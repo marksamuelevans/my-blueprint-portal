@@ -4,8 +4,9 @@ import { href } from "../router";
 import { ActionRow, ErrorNote, Loading, SectionTitle } from "../ui/bits";
 import { Icon } from "../ui/icons";
 import { shortDate } from "../format";
+import { signOut } from "../data/auth";
 
-export default function Account() {
+export default function Account({ onSignOut }: { onSignOut: () => void }) {
   const { data, loading, error } = useAsync(() => api.getHomeSummary(), []);
   if (loading) return <Loading />;
   if (error || !data) return <ErrorNote message={error ?? "We couldn't load your account."} />;
@@ -39,6 +40,10 @@ export default function Account() {
       <SectionTitle>Help</SectionTitle>
       <ActionRow quiet title="Getting help now" to={href("crisis")} />
       <ActionRow quiet title="Contact the office" meta="(615) 555-0100" onClick={() => {}} />
+
+      <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => { signOut(); onSignOut(); }}>
+        Sign out
+      </button>
     </>
   );
 }

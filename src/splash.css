@@ -1,0 +1,83 @@
+/* ============================================================
+   Opening splash — brand frame on the navy shell.
+   Every element animates transform + opacity only; reduced motion
+   collapses to the end state. Same timing as BlueprintOS.
+   ============================================================ */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--bp-ink-900);
+  opacity: 1;
+  transition: opacity var(--bp-dur-4) var(--bp-ease);
+  cursor: pointer;
+}
+.splash.out { opacity: 0; pointer-events: none; }
+
+.splash-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bp-space-5);
+  transition: transform var(--bp-dur-4) var(--bp-ease);
+}
+.splash.out .splash-inner { transform: scale(1.03); }
+
+/* --- the mark: the ring draws itself closed, then the dot blooms inside --- */
+.splash-mark { position: relative; width: 72px; height: 72px; }
+.splash-draw { display: block; transform: rotate(-90deg); }  /* the draw starts at 12 o'clock */
+.splash-draw-ring {
+  stroke: var(--bp-brand-300);
+  stroke-dasharray: 207.3;             /* 2πr, r=33 */
+  stroke-dashoffset: 207.3;
+  animation: splash-drawring 1050ms var(--bp-ease) 120ms forwards;
+}
+.splash-draw-dot {
+  fill: var(--bp-brand-300);
+  transform-origin: center;
+  transform: scale(0);
+  opacity: 0;
+  animation: splash-bloom 480ms var(--bp-ease-spring) 1050ms forwards;
+}
+
+/* --- wordmark: line-mask reveal, staggered --- */
+.splash-wordmark {
+  display: flex;
+  gap: 0.22em;
+  font-family: var(--bp-font-display);
+  font-weight: 700;
+  font-size: var(--bp-size-h1);
+  line-height: var(--bp-lh-h1);
+  letter-spacing: 0.06em;
+}
+.splash-line { display: inline-block; overflow: hidden; }
+.splash-word { display: inline-block; transform: translateY(110%); animation: splash-rise 520ms var(--bp-ease) both; }
+.splash-word-1 { color: var(--bp-brand-300); animation-delay: 1150ms; }
+.splash-word-2 { color: var(--bp-surface); animation-delay: 1300ms; }
+
+@keyframes splash-drawring {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes splash-bloom {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+@keyframes splash-rise {
+  from { transform: translateY(110%); }
+  to   { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash, .splash-inner { transition: none; }
+  .splash-word, .splash-draw-ring, .splash-draw-dot { animation: none; }
+  .splash-draw-ring { stroke-dashoffset: 0; }
+  .splash-draw-dot { transform: scale(1); opacity: 1; }
+  .splash-word { transform: none; }
+}
+@media (max-width: 640px) {
+  .splash-mark, .splash-draw { width: 56px; height: 56px; }
+  .splash-wordmark { font-size: var(--bp-size-h2); }
+}
