@@ -30,7 +30,6 @@ export default function Login({ onDone }: { onDone: () => void }) {
 
       <form className="login-card" onSubmit={submit}>
         <h1>Sign in</h1>
-        <p className="sub">Your visits, medications, messages, and balance — in one place.</p>
 
         <label htmlFor="li-email">Email</label>
         <input
