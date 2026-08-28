@@ -21,7 +21,7 @@ export default function Home() {
   if (loading) return <Loading />;
   if (error || !data) return <ErrorNote message={error ?? "We couldn't load your home page."} />;
 
-  const { patient, nextVisit, formsDue, balanceCents, unreadMessages, lastVisit } = data;
+  const { patient, careTeam, nextVisit, formsDue, balanceCents, unreadMessages, lastVisit } = data;
   const name = patient.preferredName ?? patient.firstName;
   const canJoin = nextVisit ? joinable(nextVisit.startAt) : false;
 
@@ -45,8 +45,8 @@ export default function Home() {
         <section className="pcard blue">
           <div className="pcard-head">
             <span className="lbl">
-              <Icon name="calendar" size={16} />
-              Your next visit · {until(nextVisit.startAt)}
+              <Icon name={nextVisit.track === "therapy" ? "people" : "capsule"} size={16} />
+              {nextVisit.kind} · {until(nextVisit.startAt)}
             </span>
             <span className="sp" />
             <a className="iconbtn solid" href={href("visits", nextVisit.id)} aria-label="Visit details">
@@ -74,8 +74,8 @@ export default function Home() {
 
           <div className="btn-row" style={{ marginTop: 18 }}>
             {canJoin ? (
-              <a className="btn" href={href("visits", nextVisit.id)}>
-                <Icon name="video" size={20} /> Join visit
+              <a className="btn" href={href("visits", nextVisit.id, "join")}>
+                <Icon name="video" size={20} /> Enter the waiting room
               </a>
             ) : nextVisit.status === "confirmed" ? (
               <a className="btn white" href={href("visits", nextVisit.id)}>View details</a>
@@ -125,7 +125,7 @@ export default function Home() {
 
           <div className="tlist">
             {formsDue.map((f) => (
-              <a className="trow" key={f.id} href={href("health")}>
+              <a className="trow" key={f.id} href={f.id === "f-1" ? href("health", "checkin") : href("health")}>
                 <span className="grow">
                   <strong>{f.title}</strong>
                   <span className="meta">Before your visit · about {f.minutes} minutes</span>
@@ -167,6 +167,24 @@ export default function Home() {
         </section>
       )}
 
+      {careTeam.length > 0 && (
+        <section className="pcard">
+          <div className="pcard-head"><span className="lbl">Your care team</span></div>
+          <div className="tlist">
+            {careTeam.map((m) => (
+              <a className="trow" key={m.id} href={href("messages", "new")}>
+                <span className="inline-face" aria-hidden="true">{nameInitials(m.name)}</span>
+                <span className="grow">
+                  <strong>{m.name} <span className="role">{m.role}</span></strong>
+                  <span className="meta">{m.credential} · {m.cadence}</span>
+                </span>
+                <span className="chev"><Icon name="chevron" size={18} /></span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
       {lastVisit?.afterVisitSummary && (
         <section className="pcard">
           <div className="pcard-head">
@@ -176,7 +194,9 @@ export default function Home() {
               <Icon name="arrow" size={19} />
             </a>
           </div>
-          <h2 className="headline sm">What we decided</h2>
+          <h2 className="headline sm">
+            {lastVisit.track === "therapy" ? "What we worked on" : "What we decided"}
+          </h2>
           <p className="excerpt">{lastVisit.afterVisitSummary}</p>
         </section>
       )}

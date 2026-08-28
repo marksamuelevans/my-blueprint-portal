@@ -35,8 +35,10 @@ export function until(iso: string): string {
   return `in ${days} days`;
 }
 
-/** Within this window the visit is joinable and the UI shifts to Join. */
-export const joinable = (iso: string) => Date.parse(iso) - Date.now() < 15 * 60_000;
+/** The waiting room opens 5 minutes before the hour. Earlier than that and
+    there is nothing to wait in; later and people think they are late. */
+export const JOIN_WINDOW_MS = 5 * 60_000;
+export const joinable = (iso: string) => Date.parse(iso) - Date.now() < JOIN_WINDOW_MS;
 
 export const initials = (first: string, last: string) =>
   (first[0] ?? "").toUpperCase() + (last[0] ?? "").toUpperCase();

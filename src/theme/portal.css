@@ -81,11 +81,6 @@ a { color: var(--p-link); }
 /* ---------- app shell ---------- */
 .app { min-height: 100%; display: flex; flex-direction: column; background: var(--bp-ink-900); }
 
-.sandbox-banner {
-  background: var(--bp-at-risk-bg); color: var(--bp-at-risk);
-  font-size: var(--p-micro); font-weight: var(--bp-weight-semi);
-  text-align: center; padding: 6px var(--p-gutter);
-}
 
 .shell-head { position: sticky; top: 0; z-index: 20; background: var(--bp-ink-900); }
 .top {
@@ -123,16 +118,27 @@ a { color: var(--p-link); }
   bottom: calc(12px + env(safe-area-inset-bottom));
   width: calc(100% - 2 * var(--p-gutter)); max-width: 440px;
   display: flex; gap: 2px; padding: 6px;
-  background: var(--bp-ink-700);
   border-radius: 999px;
+  /* Real glass. Panels scroll under this bar, so transparency costs contrast:
+     at 0.72 a white card behind drops #9FB0C4 labels to 2.7:1. The fix is to
+     buy the transparency back with brighter labels rather than a denser bar —
+     near-white still measures 5.1:1 against the worst case (pure white
+     behind) and 12.6:1 over the navy. */
+  background: rgba(20, 34, 57, 0.72);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tabs { background: var(--bp-ink-700); }
 }
 .tabs a {
   flex: 1; min-height: var(--p-touch);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   padding: 6px 2px; border-radius: 999px; text-decoration: none;
   font-family: var(--bp-font-display); font-size: 10.5px; font-weight: var(--bp-weight-semi);
-  color: #9FB0C4;                          /* 6.7:1 on ink-700 */
+  color: #E8EEF5;                          /* 12.6:1 over navy, 5.1:1 worst-case glass */
   transition: background var(--bp-dur-1) var(--bp-ease);
 }
 .tabs a.on { background: #fff; color: var(--bp-ink-800); }
@@ -199,7 +205,10 @@ a { color: var(--p-link); }
 
 .inline-pill {
   display: inline-flex; align-items: center; gap: 5px;
-  vertical-align: 3px; margin: 0 1px;
+  /* Centred on the CAP HEIGHT, not the line box. Baseline alignment puts the
+     pill ~1.5px above the cap centre and the old +3px made that ~4.5px; an em
+     value keeps it right at both .headline sizes. */
+  vertical-align: -0.055em; margin: 0 1px 0 0.06em;
   padding: 3px 11px 4px; border-radius: 999px;
   background: #fff; border: 1px solid var(--p-hair);
   font-family: var(--bp-font-text); font-size: 13.5px;
@@ -324,7 +333,8 @@ a { color: var(--p-link); }
   .main { padding-bottom: 64px; max-width: 960px; }
   .tabs {
     position: static; transform: none; box-shadow: none;
-    background: transparent; border-radius: 0;
+    background: transparent; border-radius: 0; border: 0;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
     max-width: 960px; width: 100%; margin: 0 auto;
     padding: 0 var(--p-gutter) 4px; gap: 4px;
   }
@@ -405,3 +415,194 @@ a { color: var(--p-link); }
 
 .login-foot { font-size: var(--p-small); color: #9FB0C4; text-align: center; }
 .login-foot a { color: var(--bp-brand-300); }
+
+/* ============================================================
+   VIDEO VISIT
+   The call takes the whole viewport — the tab bar would be a way to
+   walk out of a session by accident.
+   ============================================================ */
+.call {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; flex-direction: column;
+  background: #06101C;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.call-stage { flex: 1; position: relative; display: grid; place-items: center; padding: 20px; min-height: 0; }
+
+.call-remote { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.call-face {
+  display: grid; place-items: center;
+  width: 76px; height: 76px; border-radius: 50%;
+  background: var(--bp-brand-300); color: var(--bp-brand-700);
+  font-family: var(--bp-font-display); font-weight: 700; font-size: 24px;
+}
+.call-face.lg { width: 116px; height: 116px; font-size: 38px; }
+.call-name { color: #fff; font-family: var(--bp-font-display); font-weight: var(--bp-weight-semi); font-size: 19px; }
+.call-sub  { color: #9FB0C4; font-size: var(--p-small); }
+
+.call-pulse {
+  width: 116px; height: 116px; border-radius: 50%;
+  background: var(--bp-ink-700);
+  animation: call-pulse 2200ms var(--bp-ease) infinite;
+}
+@keyframes call-pulse { 0%,100% { transform: scale(1); opacity: .8 } 50% { transform: scale(1.06); opacity: 1 } }
+
+.call-self {
+  position: absolute; right: 20px; top: 20px;
+  width: 104px; height: 148px; border-radius: 16px; overflow: hidden;
+  background: var(--bp-ink-700); display: grid; place-items: center;
+  border: 1px solid rgba(255,255,255,.14);
+}
+.call-self video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.call-self .call-face { width: 46px; height: 46px; font-size: 14px; }
+.call-self.off { opacity: .85; }
+
+.call-meta {
+  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  padding: 7px 14px; border-radius: 999px;
+  background: rgba(255,255,255,.10); color: #DCE5F0;
+  font-family: var(--bp-font-mono); font-size: var(--p-micro);
+}
+.call-dot { width: 7px; height: 7px; border-radius: 50%; background: #6FD3A6; }
+
+.call-bar {
+  display: flex; gap: 8px; padding: 12px 14px 16px;
+  background: #0A1726; border-top: 1px solid rgba(255,255,255,.08);
+}
+.call-btn {
+  flex: 1; min-height: 62px; border: 0; border-radius: 18px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: rgba(255,255,255,.10); color: #fff; text-decoration: none;
+  font-family: var(--bp-font-display); font-size: 11.5px; font-weight: var(--bp-weight-semi);
+}
+.call-btn:hover { background: rgba(255,255,255,.16); }
+.call-btn:focus-visible { box-shadow: var(--bp-focus-ring); outline: none; }
+/* Off is a choice here, not an error — it reads as "set", never as broken. */
+.call-btn.off { background: #fff; color: var(--bp-ink-800); }
+.call-btn.end { background: var(--bp-critical); }
+.call-btn.end:hover { background: #B03B3B; }
+
+/* device check */
+.devcheck {
+  margin-top: 12px; height: 168px; border-radius: 18px; overflow: hidden;
+  background: var(--bp-ink-900); display: grid; place-items: center; color: var(--bp-ink-300);
+}
+.devcheck video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.devcheck-face { display: grid; place-items: center; }
+
+@media (min-width: 900px) {
+  .call-stage { padding: 40px; }
+  .call-self { width: 168px; height: 118px; }
+  .call-bar { justify-content: center; padding: 16px; }
+  .call-btn { flex: 0 0 128px; }
+}
+
+/* ============================================================
+   COMPOSING A MESSAGE
+   ============================================================ */
+.fld {
+  display: block; margin: 16px 0 7px;
+  font-family: var(--bp-font-display); font-size: 12px;
+  font-weight: var(--bp-weight-semi); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--bp-ink-500);
+}
+.inp {
+  width: 100%; min-height: var(--p-touch);
+  padding: 12px 15px; border-radius: 14px;
+  border: 1px solid var(--bp-bone-300); background: var(--bp-surface);
+  font-family: var(--bp-font-text); font-size: var(--p-text); color: var(--bp-ink-800);
+  line-height: 1.55;
+}
+.inp::placeholder { color: var(--bp-ink-400); }
+.inp:focus-visible { box-shadow: var(--bp-focus-ring); outline: none; border-color: var(--bp-brand-900); }
+.ta { resize: vertical; min-height: 120px; }
+.cnt {
+  margin-top: 6px; text-align: right;
+  /* ink-400 is an eyebrow/placeholder value — 3.0:1 on white, which a real
+     line of text has to clear. */
+  font-family: var(--bp-font-mono); font-size: var(--p-micro); color: var(--bp-ink-500);
+}
+
+/* A recipient choice is a row, not a dropdown — the whole point is to see
+   what each person is the right choice for before picking. */
+.trow.pickable { align-items: flex-start; gap: 12px; }
+.trow.pickable .pick {
+  flex-shrink: 0; margin-top: 2px;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--bp-bone-300); background: var(--bp-surface);
+  display: grid; place-items: center; color: #fff;
+}
+.trow.pickable.on .pick { background: var(--bp-brand-900); border-color: var(--bp-brand-900); }
+.trow .role {
+  font-family: var(--bp-font-text); font-weight: var(--bp-weight-regular);
+  font-size: var(--p-small); color: var(--bp-ink-500);
+}
+
+.await {
+  display: flex; align-items: center; gap: 10px;
+  padding: 2px 4px; color: var(--p-muted); font-size: var(--p-small);
+}
+.typing { display: inline-flex; gap: 4px; }
+.typing i {
+  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  animation: typing 1200ms ease-in-out infinite;
+}
+.typing i:nth-child(2) { animation-delay: 160ms; }
+.typing i:nth-child(3) { animation-delay: 320ms; }
+@keyframes typing { 0%,60%,100% { opacity: .3 } 30% { opacity: 1 } }
+
+.composer .btn { margin-top: 14px; }
+.inline-face.sm { width: 22px; height: 22px; font-size: 9.5px; vertical-align: -6px; margin-right: 3px; }
+
+.cal { display: flex; flex-direction: column; }
+.cal .opt {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 4px 0 2px; cursor: pointer;
+  font-size: var(--p-small); color: var(--bp-ink-500);
+}
+.cal .opt input { width: 20px; height: 20px; accent-color: var(--bp-brand-900); flex-shrink: 0; }
+
+/* ---------- check-in ---------- */
+.qset { border: 0; padding: 0; margin: 8px 0 0; }
+.qtext {
+  padding: 0; margin-bottom: 12px;
+  font-family: var(--bp-font-display); font-size: 19px; line-height: 1.3;
+  font-weight: var(--bp-weight-semi); color: var(--bp-ink-800); letter-spacing: -0.012em;
+}
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt-btn {
+  display: flex; align-items: center; gap: 12px;
+  min-height: var(--p-touch); padding: 11px 15px;
+  border: 1px solid var(--bp-bone-300); border-radius: 14px;
+  background: var(--bp-surface); cursor: pointer;
+  font-size: var(--p-text); color: var(--bp-ink-800);
+}
+.opt-btn input { width: 20px; height: 20px; accent-color: var(--bp-brand-900); flex-shrink: 0; margin: 0; }
+.opt-btn.on { border-color: var(--bp-brand-900); background: var(--bp-brand-100); }
+.opt-btn:focus-within { box-shadow: var(--bp-focus-ring); }
+
+/* The safety response. Bordered, not tinted red — this has to read as
+   steady and available, not as an alarm going off at the patient. */
+.safety {
+  margin-top: 16px; padding: 16px; border-radius: 18px;
+  background: var(--bp-surface); border: 2px solid var(--bp-critical);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.safety strong { font-family: var(--bp-font-display); font-size: 17px; }
+.safety p { font-size: var(--p-small); color: var(--bp-ink-600); }
+.safety .fine { font-size: var(--p-micro); color: var(--bp-ink-500); }
+.safety .btn { margin-top: 2px; }
+.plain { color: inherit; text-decoration: none; display: block; }
+
+/* A track heading sits on the shell between panels — it names the
+   relationship rather than dividing the app into two halves. */
+.tracklead {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 4px 0;
+  font-family: var(--bp-font-display); font-size: 13px;
+  font-weight: var(--bp-weight-semi); letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--p-muted);
+}
+.trow.static { cursor: default; }
+.struck { text-decoration: line-through; text-decoration-thickness: 1.5px; color: var(--bp-ink-500); }

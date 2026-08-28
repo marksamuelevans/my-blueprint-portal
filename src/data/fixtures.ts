@@ -1,5 +1,6 @@
 import type {
-  Billing, DocumentItem, FormTask, Insurance, Medication, Patient, Thread, Visit,
+  Billing, CareTeamMember, CheckinQuestion, CheckinResult, DocumentItem, FormTask,
+  Insurance, Medication, Patient, PracticeItem, Thread, TherapyGoal, Visit,
 } from "./types";
 
 /* Demo data — one believable patient, deliberately.
@@ -9,13 +10,28 @@ import type {
    goes stale and the "starts in 8 minutes" states stay reachable. */
 
 const day = 86_400_000;
-const iso = (d: Date) => d.toISOString().slice(0, 19);
-const dateOnly = (d: Date) => d.toISOString().slice(0, 10);
+
+/* LOCAL ISO, not UTC.
+
+   toISOString() converts to UTC, and slicing the Z off leaves a string that
+   Date.parse then reads back as LOCAL — so every fixture time was silently
+   shifted by the timezone offset. A visit written as 10:00 was displaying as
+   3:00 PM in Central. Everything downstream (until(), joinable(), the
+   waiting-room window) inherited the error. */
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const iso = (d: Date) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}` +
+  `T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+const dateOnly = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const shift = (days: number, hour: number, minute = 0) => {
   const d = new Date(Date.now() + days * day);
   d.setHours(hour, minute, 0, 0);
   return d;
 };
+/* The demo's next visit is always about to start, so the waiting room and the
+   call are reachable the moment anyone opens the sandbox — a telehealth demo
+   you can only see for 5 minutes a day is not a demo. */
+const minutesFromNow = (m: number) => new Date(Date.now() + m * 60_000);
 
 export const patient: Patient = {
   firstName: "Alex",
@@ -27,15 +43,48 @@ export const patient: Patient = {
   accountType: "adult",
 };
 
-const bailey = { name: "Bailey Dryden", credential: "PMHNP-BC" };
+/* Alex sees both a prescriber and a therapist — the case that actually
+   exercises the track logic. Flip either out of careTeam to see the
+   single-track experience. */
+const bailey = { name: "Bailey Dryden", credential: "PMHNP-BC", track: "psychiatry" as const };
+const maya = { name: "Maya Ellison", credential: "LCSW", track: "therapy" as const };
+
+export const careTeam: CareTeamMember[] = [
+  {
+    ...bailey,
+    id: "p-1",
+    role: "Prescriber",
+    cadence: "Every 2 months",
+    since: dateOnly(shift(-56, 12)),
+  },
+  {
+    ...maya,
+    id: "p-2",
+    role: "Therapist",
+    cadence: "Every 2 weeks",
+    since: dateOnly(shift(-42, 12)),
+  },
+];
 
 export const visits: Visit[] = [
+  {
+    id: "v-therapy-next",
+    startAt: iso(minutesFromNow(4)),
+    endAt: iso(minutesFromNow(54)),
+    provider: maya,
+    kind: "Therapy session",
+    track: "therapy",
+    telehealth: true,
+    status: "scheduled",
+    afterVisitSummary: null,
+  },
   {
     id: "v-next",
     startAt: iso(shift(6, 10, 0)),
     endAt: iso(shift(6, 10, 30)),
     provider: bailey,
-    kind: "Follow-up",
+    kind: "Medication follow-up",
+    track: "psychiatry",
     telehealth: true,
     status: "scheduled",
     afterVisitSummary: null,
@@ -45,7 +94,8 @@ export const visits: Visit[] = [
     startAt: iso(shift(-26, 10, 0)),
     endAt: iso(shift(-26, 10, 30)),
     provider: bailey,
-    kind: "Follow-up",
+    kind: "Medication follow-up",
+    track: "psychiatry",
     telehealth: true,
     status: "completed",
     afterVisitSummary:
@@ -57,10 +107,60 @@ export const visits: Visit[] = [
     endAt: iso(shift(-56, 15, 0)),
     provider: bailey,
     kind: "New patient evaluation",
+    track: "psychiatry",
     telehealth: true,
     status: "completed",
     afterVisitSummary:
       "We started sertraline at 50 mg and talked through what to expect in the first few weeks. Reach out any time if side effects feel hard to manage — that is not something to wait out.",
+  },
+];
+
+export const therapyPast: Visit = {
+  id: "v-therapy-past",
+  startAt: iso(shift(-12, 15, 0)),
+  endAt: iso(shift(-12, 15, 50)),
+  provider: maya,
+  kind: "Therapy session",
+  track: "therapy",
+  telehealth: true,
+  status: "completed",
+  /* Therapy summaries are written in a different voice than medication
+     ones — what we worked on, not what we changed. */
+  afterVisitSummary:
+    "We spent most of the session on the Sunday-evening dread and where it starts. You noticed it lifts when the week already has one thing in it you chose. Before we meet again, see whether naming the dread out loud when it arrives changes how long it stays.",
+};
+
+visits.push(therapyPast);
+
+export const goals: TherapyGoal[] = [
+  {
+    id: "g-1",
+    title: "Get through Sunday evenings",
+    detail: "Sunday nights turn into a spiral about the whole week ahead.",
+    addedAt: dateOnly(shift(-42, 12)),
+  },
+  {
+    id: "g-2",
+    title: "Say the hard thing at work sooner",
+    detail: "I sit on things for weeks and then they come out badly.",
+    addedAt: dateOnly(shift(-28, 12)),
+  },
+];
+
+export const practice: PracticeItem[] = [
+  {
+    id: "pr-1",
+    title: "Name the dread out loud",
+    detail: "When Sunday evening starts, say what you notice out loud — once, plainly.",
+    fromVisitId: "v-therapy-past",
+    done: false,
+  },
+  {
+    id: "pr-2",
+    title: "One chosen thing in the week",
+    detail: "Put one thing you actually want into the week before it fills up.",
+    fromVisitId: "v-therapy-past",
+    done: true,
   },
 ];
 
@@ -91,6 +191,10 @@ export const threads: Thread[] = [
     subject: "Question about morning dose",
     updatedAt: iso(shift(-1, 15, 12)),
     unread: true,
+    withProviderId: "p-1",
+    withName: "Bailey Dryden",
+    track: "psychiatry",
+    awaitingReply: false,
     messages: [
       {
         id: "msg-1",
@@ -102,7 +206,7 @@ export const threads: Thread[] = [
       {
         id: "msg-2",
         from: "care_team",
-        authorName: "Care team",
+        authorName: "Bailey Dryden",
         body: "Yes — shifting it a little later on weekends is fine. Try to keep it within the same few hours each day so sleep stays steady. Bring it up at your next visit if the difference feels noticeable.",
         sentAt: iso(shift(-1, 15, 12)),
       },
@@ -137,3 +241,27 @@ export const documents: DocumentItem[] = [
   { id: "d-2", title: "Visit summary", date: dateOnly(shift(-56, 12)), kind: "after_visit" },
   { id: "d-3", title: "Telehealth consent", date: dateOnly(shift(-58, 12)), kind: "consent" },
 ];
+
+
+/* PHQ-9 then GAD-7, in their published order. Item 9 of the PHQ carries the
+   safety flag and is the reason this form is not just a list of radios. */
+export const checkinQuestions: CheckinQuestion[] = [
+  { id: "p1", scale: "phq9", text: "Little interest or pleasure in doing things" },
+  { id: "p2", scale: "phq9", text: "Feeling down, depressed, or hopeless" },
+  { id: "p3", scale: "phq9", text: "Trouble falling or staying asleep, or sleeping too much" },
+  { id: "p4", scale: "phq9", text: "Feeling tired or having little energy" },
+  { id: "p5", scale: "phq9", text: "Poor appetite or overeating" },
+  { id: "p6", scale: "phq9", text: "Feeling bad about yourself — or that you are a failure, or have let yourself or your family down" },
+  { id: "p7", scale: "phq9", text: "Trouble concentrating on things, such as reading or watching television" },
+  { id: "p8", scale: "phq9", text: "Moving or speaking so slowly that other people could have noticed — or being so restless that you have been moving a lot more than usual" },
+  { id: "p9", scale: "phq9", safety: true, text: "Thoughts that you would be better off dead, or of hurting yourself in some way" },
+  { id: "g1", scale: "gad7", text: "Feeling nervous, anxious, or on edge" },
+  { id: "g2", scale: "gad7", text: "Not being able to stop or control worrying" },
+  { id: "g3", scale: "gad7", text: "Worrying too much about different things" },
+  { id: "g4", scale: "gad7", text: "Trouble relaxing" },
+  { id: "g5", scale: "gad7", text: "Being so restless that it is hard to sit still" },
+  { id: "g6", scale: "gad7", text: "Becoming easily annoyed or irritable" },
+  { id: "g7", scale: "gad7", text: "Feeling afraid, as if something awful might happen" },
+];
+
+export const checkins: CheckinResult[] = [];

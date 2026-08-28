@@ -5,10 +5,15 @@ import { Empty, ErrorNote, Loading } from "../ui/bits";
 import { Icon } from "../ui/icons";
 import { joinable, longDate, nameInitials, time, until } from "../format";
 import type { Visit } from "../data/types";
+import VisitJoin from "./VisitJoin";
+import { downloadIcs } from "../calendar";
+import { useState } from "react";
 
 export default function Visits() {
   const route = useRoute();
-  return route.path[0] ? <VisitDetail id={route.path[0]} /> : <VisitList />;
+  const [id, sub] = route.path;
+  if (id && sub === "join") return <VisitJoin id={id} />;
+  return id ? <VisitDetail id={id} /> : <VisitList />;
 }
 
 function VisitList() {
@@ -58,8 +63,8 @@ function VisitPanel({ visit }: { visit: Visit }) {
     <section className="pcard blue">
       <div className="pcard-head">
         <span className="lbl">
-          <Icon name="calendar" size={16} />
-          Your next visit · {until(visit.startAt)}
+          <Icon name={visit.track === "therapy" ? "people" : "capsule"} size={16} />
+          {visit.kind} · {until(visit.startAt)}
         </span>
         <span className="sp" />
         <a className="iconbtn solid" href={href("visits", visit.id)} aria-label="Visit details">
@@ -86,7 +91,7 @@ function VisitPanel({ visit }: { visit: Visit }) {
       )}
 
       <div className="pcard-foot">
-        <span>{visit.kind}</span>
+        <span>{visit.provider.credential}</span>
         {visit.status === "confirmed"
           ? <span className="chip ok">Confirmed</span>
           : <span className="chip warn">Not confirmed yet</span>}
@@ -128,8 +133,8 @@ function VisitDetail({ id }: { id: string }) {
       <section className={`pcard${isPast ? "" : " blue"}`}>
         <div className="pcard-head">
           <span className="lbl">
-            <Icon name="calendar" size={16} />
-            {isPast ? "Past visit" : canJoin ? `Starts ${until(visit.startAt)}` : `In ${until(visit.startAt).replace(/^in /, "")}`}
+            <Icon name={visit.track === "therapy" ? "people" : "capsule"} size={16} />
+            {visit.kind} · {isPast ? longDate(visit.startAt) : until(visit.startAt)}
           </span>
         </div>
 
@@ -145,17 +150,21 @@ function VisitDetail({ id }: { id: string }) {
 
         {canJoin && (
           <a className="btn" href={href("visits", visit.id, "join")} style={{ marginTop: 18 }}>
-            <Icon name="video" size={20} /> Join visit
+            <Icon name="video" size={20} /> Enter the waiting room
           </a>
         )}
 
-        <div className="pcard-foot"><span>{visit.kind}</span></div>
+        <div className="pcard-foot"><span>{longDate(visit.startAt)} at {time(visit.startAt)}</span></div>
       </section>
 
       {/* A purpose-written patient artifact — deliberately not the clinical note. */}
       {visit.afterVisitSummary && (
         <section className="pcard">
-          <div className="pcard-head"><span className="lbl">What we decided</span></div>
+          <div className="pcard-head">
+            <span className="lbl">
+              {visit.track === "therapy" ? "What we worked on" : "What we decided"}
+            </span>
+          </div>
           <p className="body">{visit.afterVisitSummary}</p>
         </section>
       )}
@@ -169,10 +178,7 @@ function VisitDetail({ id }: { id: string }) {
                 <span className="meta">We'll reply within one business day</span></span>
               <span className="chev"><Icon name="chevron" size={18} /></span>
             </a>
-            <button className="trow" onClick={() => {}}>
-              <span className="grow"><strong>Add to your calendar</strong></span>
-              <span className="chev"><Icon name="chevron" size={18} /></span>
-            </button>
+            <AddToCalendar visit={visit} />
           </div>
         </section>
       )}
@@ -181,5 +187,31 @@ function VisitDetail({ id }: { id: string }) {
         Having trouble? Call <a href="tel:+16155550100">(615) 555-0100</a>
       </p>
     </>
+  );
+}
+
+/* The discreet entry is the default: a calendar syncs to places the patient
+   does not control, and "Medication follow-up with Bailey Dryden" on a shared
+   phone tells whoever picks it up more than they chose to share. */
+function AddToCalendar({ visit }: { visit: Visit }) {
+  const [detailed, setDetailed] = useState(false);
+  return (
+    <div className="cal">
+      <button className="trow" onClick={() => downloadIcs(visit, detailed)}>
+        <span className="grow">
+          <strong>Add to your calendar</strong>
+          <span className="meta">
+            {detailed
+              ? `Saves as "${visit.kind} with ${visit.provider.name}"`
+              : 'Saves as "Appointment", with no details'}
+          </span>
+        </span>
+        <span className="chev"><Icon name="arrow" size={18} /></span>
+      </button>
+      <label className="opt">
+        <input type="checkbox" checked={detailed} onChange={(e) => setDetailed(e.target.checked)} />
+        <span>Include who it's with and what it's for</span>
+      </label>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { TABS, href, navigate, useRoute } from "../router";
 import { Icon } from "./icons";
-import { SANDBOX } from "../data/api";
 
 const TAB_META: Record<string, { label: string; icon: string }> = {
   home: { label: "Home", icon: "home" },
@@ -17,12 +16,6 @@ export function Shell({
   const route = useRoute();
   return (
     <div className="app">
-      {SANDBOX && (
-        <div className="sandbox-banner" role="status">
-          Demo — sample data only, not a real patient record
-        </div>
-      )}
-
       <div className="shell-head">
         <header className="top">
           <div className="top-inner">
