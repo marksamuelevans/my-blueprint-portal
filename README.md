@@ -48,3 +48,5 @@ crisis affordance is on every screen including sign-in.
 Pushes to `main` build on Netlify and publish to
 `my-blueprint-portal.netlify.app`, which is password-protected and
 noindexed. `netlify.toml` carries the CSP and security headers.
+
+<!-- ci: builds on push to main -->
