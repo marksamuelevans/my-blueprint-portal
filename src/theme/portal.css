@@ -487,8 +487,12 @@ a { color: var(--p-link); }
 /* A camera's own shape, not a letterbox strip — 4:3 matches what most
    laptop and phone front cameras actually hand you, so the preview shows
    the framing the provider will see. */
+/* Capped and centred. On a wide card the 4:3 box is narrower than the panel,
+   and left-aligning it left a lake of white to its right; the meter and the
+   toggles share the same column so the three read as one control. */
 .devcheck {
-  margin-top: 12px; aspect-ratio: 4 / 3; max-height: 300px;
+  margin: 12px auto 0; aspect-ratio: 4 / 3;
+  width: 100%; max-width: 400px;
   border-radius: 18px; overflow: hidden;
   background: var(--bp-ink-900); display: grid; place-items: center; color: var(--bp-ink-300);
 }
@@ -619,10 +623,13 @@ a { color: var(--p-link); }
 .main:focus { outline: none; }
 .avatar { text-decoration: none; }
 
-.devbtns { display: flex; gap: 10px; margin-top: 14px; }
+.devbtns { display: flex; gap: 10px; margin: 14px auto 0; width: 100%; max-width: 400px; }
+/* The whole "before you join" stack is one column, so the primary action
+   lines up with the preview instead of spanning the card behind it. */
+.devjoin { display: flex; margin-left: auto; margin-right: auto; max-width: 400px; }
 .devbtns .btn { width: auto; flex: 1; padding: 12px 14px; font-size: var(--p-small); }
 
-.meter-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--bp-ink-600); }
+.meter-row { display: flex; align-items: center; gap: 10px; margin: 12px auto 0; width: 100%; max-width: 400px; color: var(--bp-ink-600); }
 .meter {
   flex: 1; height: 8px; border-radius: 999px; overflow: hidden;
   background: var(--bp-bone-400);

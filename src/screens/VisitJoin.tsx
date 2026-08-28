@@ -327,7 +327,7 @@ function Call({ visit }: { visit: NonNullable<Awaited<ReturnType<typeof api.getV
         )}
 
         {deviceState === "idle" && (
-          <button className="btn ghost" onClick={checkDevices}>Test camera and mic</button>
+          <button className="btn ghost devjoin" onClick={checkDevices}>Test camera and mic</button>
         )}
         {deviceState === "asking" && <p className="body muted">Waiting for your browser…</p>}
         {deviceState === "ok" && (
@@ -354,7 +354,7 @@ function Call({ visit }: { visit: NonNullable<Awaited<ReturnType<typeof api.getV
           </p>
         )}
 
-        <button className="btn" disabled={phase === "early"} onClick={() => setPhase("live")}>
+        <button className="btn devjoin" disabled={phase === "early"} onClick={() => setPhase("live")}>
           <Icon name="video" size={20} />
           {phase === "early" ? `Opens ${until(new Date(opensMs).toISOString())}` : "Enter the waiting room"}
         </button>
